@@ -11,6 +11,7 @@ using std::vector;
  * Initializes Unscented Kalman filter
  */
 UKF::UKF() {
+
   // if this is false, laser measurements will be ignored (except during init)
   use_laser_ = true;
 
@@ -24,10 +25,10 @@ UKF::UKF() {
   P_ = MatrixXd(5, 5);
 
   // Process noise standard deviation longitudinal acceleration in m/s^2
-  std_a_ = 30;
+  std_a_ = 30; // TODO: set to a small value see Tuning Process Noise
 
   // Process noise standard deviation yaw acceleration in rad/s^2
-  std_yawdd_ = 30;
+  std_yawdd_ = 30; // TODO: set to a small value see Tuning Process Noise
 
   // Laser measurement noise standard deviation position1 in m
   std_laspx_ = 0.15;
@@ -66,6 +67,27 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
   Complete this function! Make sure you switch between lidar and radar
   measurements.
   */
+
+  /*****************************************************************************
+   *  Initialization
+   ****************************************************************************/
+   if (!is_initialized_) InitializeUKF();
+
+  /*****************************************************************************
+   *  Prediction
+   ****************************************************************************/
+   Prediction(delta_t);
+
+  /*****************************************************************************
+   *  Update
+   ****************************************************************************/
+   if (measurement_pack.sensor_type_ == MeasurementPackage::RADAR) {
+     // Radar updates
+	 UpdateRadar(measurement_pack.raw_measurements_);
+   } else {
+     // Laser updates
+	 UpdateLidar(measurement_pack.raw_measurements_);
+   }
 }
 
 /**
