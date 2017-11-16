@@ -71,7 +71,7 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
   /*****************************************************************************
    *  Initialization
    ****************************************************************************/
-   if (!is_initialized_) InitializeUKF();
+   if (!is_initialized_) InitializeUKF(meas_package);
 
   /*****************************************************************************
    *  Prediction

@@ -85,6 +85,12 @@ public:
   void ProcessMeasurement(MeasurementPackage meas_package);
 
   /**
+   * Initialize UKF with first measurement
+   * @param meas_package The first measurement data of either radar or laser
+   */
+  void InitializeUKF(MeasurementPackage meas_package);
+
+  /**
    * Prediction Predicts sigma points, the state, and the state covariance
    * matrix
    * @param delta_t Time between k and k+1 in s
