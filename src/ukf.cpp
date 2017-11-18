@@ -160,6 +160,81 @@ void UKF::InitializeUKF(MeasurementPackage meas_package) {
     is_initialized_ = true;
 }
 
+/**
+ * Predicts sigma points, the state, and the state covariance matrix.
+ * @param {double} delta_t the change in time (in seconds) between the last
+ * measurement and this one.
+ */
+void UKF::Prediction(double delta_t) {
+  /**
+  TODO:
+  Complete this function! Estimate the object's location. Modify the state
+  vector, x_. Predict sigma points, the state, and the state covariance matrix.
+  */
+   AugmentedSigmaPoints();
+   SigmaPointPrediction(delta_t);
+   PredictMeanAndCovariance();
+}
+
+/**
+ * Updates the state and the state covariance matrix using a laser measurement.
+ * @param {MeasurementPackage} meas_package
+ */
+void UKF::UpdateLidar(MeasurementPackage meas_package) {
+  /**
+  TODO:
+
+  Complete this function! Use lidar data to update the belief about the object's
+  position. Modify the state vector, x_, and covariance, P_.
+
+  You'll also need to calculate the lidar NIS.
+  */
+   n_z_ = 2;
+
+   //mean predicted measurement
+   VectorXd z_pred = VectorXd(n_z_);
+   //measurement covariance matrix S
+   MatrixXd S = MatrixXd::Zero(n_z_,n_z_);
+   //create matrix for sigma points in measurement space
+   MatrixXd Zsig = MatrixXd(n_z_, 2 * n_aug_ + 1);
+   PredictLidarMeasurement(&z_pred, &S, &Zsig);
+
+   VectorXd z = VectorXd(n_z_);
+   z = meas_package.raw_measurements_;
+   UpdateState(&z, &z_pred, &S, &Zsig);
+}
+
+void UKF::UpdateRadar(MeasurementPackage meas_package) {
+  /**
+  TODO:
+
+  Complete this function! Use radar data to update the belief about the object's
+  position. Modify the state vector, x_, and covariance, P_.
+
+  You'll also need to calculate the radar NIS.
+  */
+   n_z_ = 3;
+
+   //mean predicted measurement
+   VectorXd z_pred = VectorXd(n_z_);
+   //measurement covariance matrix S
+   MatrixXd S = MatrixXd::Zero(n_z_,n_z_);
+   //create matrix for sigma points in measurement space
+   MatrixXd Zsig = MatrixXd(n_z_, 2 * n_aug_ + 1);
+
+   PredictRadarMeasurement(&z_pred, &S, &Zsig);
+
+   VectorXd z = VectorXd(n_z_);
+   z = meas_package.raw_measurements_;
+   UpdateState(&z, &z_pred, &S, &Zsig);
+}
+
+
+/*
+ * Helper Functions
+ *
+ * */
+
 void UKF::AugmentedSigmaPoints() {
   //create augmented mean vector
   VectorXd x_aug = VectorXd(7);
@@ -232,22 +307,6 @@ void UKF::PredictMeanAndCovariance() {
 	  }
 }
 
-/**
- * Predicts sigma points, the state, and the state covariance matrix.
- * @param {double} delta_t the change in time (in seconds) between the last
- * measurement and this one.
- */
-void UKF::Prediction(double delta_t) {
-  /**
-  TODO:
-  Complete this function! Estimate the object's location. Modify the state
-  vector, x_. Predict sigma points, the state, and the state covariance matrix.
-  */
-   AugmentedSigmaPoints();
-   SigmaPointPrediction(delta_t);
-   PredictMeanAndCovariance();
-}
-
 void UKF::PredictLidarMeasurement(VectorXd* z_pred,  MatrixXd* S, MatrixXd* Zsig) {
 
 	 //transform sigma points into measurement space
@@ -276,33 +335,6 @@ void UKF::PredictLidarMeasurement(VectorXd* z_pred,  MatrixXd* S, MatrixXd* Zsig
 	 *S = *S + R;
 }
 
-/**
- * Updates the state and the state covariance matrix using a laser measurement.
- * @param {MeasurementPackage} meas_package
- */
-void UKF::UpdateLidar(MeasurementPackage meas_package) {
-  /**
-  TODO:
-
-  Complete this function! Use lidar data to update the belief about the object's
-  position. Modify the state vector, x_, and covariance, P_.
-
-  You'll also need to calculate the lidar NIS.
-  */
-   n_z_ = 2;
-
-   //mean predicted measurement
-   VectorXd z_pred = VectorXd(n_z_);
-   //measurement covariance matrix S
-   MatrixXd S = MatrixXd::Zero(n_z_,n_z_);
-   //create matrix for sigma points in measurement space
-   MatrixXd Zsig = MatrixXd(n_z_, 2 * n_aug_ + 1);
-   PredictLidarMeasurement(&z_pred, &S, &Zsig);
-
-   VectorXd z = VectorXd(n_z_);
-   z = meas_package.raw_measurements_;
-   UpdateState(&z, &z_pred, &S, &Zsig);
-}
 
 /**
  * Updates the state and the state covariance matrix using a radar measurement.
@@ -348,31 +380,6 @@ void UKF::PredictRadarMeasurement(VectorXd* z_pred,  MatrixXd* S, MatrixXd* Zsig
 
 }
 
-
-void UKF::UpdateRadar(MeasurementPackage meas_package) {
-  /**
-  TODO:
-
-  Complete this function! Use radar data to update the belief about the object's
-  position. Modify the state vector, x_, and covariance, P_.
-
-  You'll also need to calculate the radar NIS.
-  */
-   n_z_ = 3;
-
-   //mean predicted measurement
-   VectorXd z_pred = VectorXd(n_z_);
-   //measurement covariance matrix S
-   MatrixXd S = MatrixXd::Zero(n_z_,n_z_);
-   //create matrix for sigma points in measurement space
-   MatrixXd Zsig = MatrixXd(n_z_, 2 * n_aug_ + 1);
-
-   PredictRadarMeasurement(&z_pred, &S, &Zsig);
-
-   VectorXd z = VectorXd(n_z_);
-   z = meas_package.raw_measurements_;
-   UpdateState(&z, &z_pred, &S, &Zsig);
-}
 
 void UKF::UpdateState(VectorXd* z, VectorXd* z_pred, MatrixXd* S,  MatrixXd* Zsig) {
 	 //create matrix for cross correlation Tc

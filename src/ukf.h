@@ -83,15 +83,23 @@ public:
    */
   virtual ~UKF();
 
-
-
   /**
    * ProcessMeasurement
    * @param meas_package The latest measurement data of either radar or laser
    */
   void ProcessMeasurement(MeasurementPackage meas_package);
 
+  /**
+   * Prediction Predicts sigma points, the state, and the state covariance
+   * matrix
+   * @param delta_t Time between k and k+1 in s
+   */
+  void Prediction(double delta_t);
+  void UpdateLidar(MeasurementPackage meas_package);
+  void UpdateRadar(MeasurementPackage meas_package);
 
+
+private:
   /**
    * Initialize UKF with first measurement
    * @param meas_package The first measurement data of either radar or laser
@@ -105,30 +113,21 @@ public:
 
   void PredictMeanAndCovariance();
 
-  /**
-   * Prediction Predicts sigma points, the state, and the state covariance
-   * matrix
-   * @param delta_t Time between k and k+1 in s
-   */
-  void Prediction(double delta_t);
 
+  // Update
 
-  void PredictLidarMeasurement(VectorXd* z_pred,  MatrixXd* S, MatrixXd* Zsig);
   /**
    * Updates the state and the state covariance matrix using a laser measurement
    * @param meas_package The measurement at k+1
    */
-  void UpdateLidar(MeasurementPackage meas_package);
+  void PredictLidarMeasurement(VectorXd* z_pred,  MatrixXd* S, MatrixXd* Zsig);
 
-
-  void PredictRadarMeasurement(VectorXd* z_pred,  MatrixXd* S, MatrixXd* Zsig);
   /**
    * Updates the state and the state covariance matrix using a radar measurement
    * @param meas_package The measurement at k+1
    */
-  void UpdateRadar(MeasurementPackage meas_package);
+  void PredictRadarMeasurement(VectorXd* z_pred,  MatrixXd* S, MatrixXd* Zsig);
 
-  // Update
 
   void UpdateState(VectorXd* z, VectorXd* z_pred, MatrixXd* S,  MatrixXd* Zsig);
 
