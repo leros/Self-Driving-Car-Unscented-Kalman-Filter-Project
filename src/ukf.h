@@ -14,7 +14,7 @@ class UKF {
 public:
 
   ///* initially set to false, set to true in first call of ProcessMeasurement
-  bool is_initialized_ = false;
+  bool is_initialized_;
 
   ///* if this is false, laser measurements will be ignored (except for init)
   bool use_laser_;
@@ -32,7 +32,7 @@ public:
   MatrixXd Xsig_pred_;
 
   ///* time when the state is true, in us
-  long long time_us_;
+  long long time_us_;  //TODO
 
   ///* Process noise standard deviation longitudinal acceleration in m/s^2
   double std_a_;
@@ -67,6 +67,11 @@ public:
   ///* Sigma point spreading parameter
   double lambda_;
 
+  MatrixXd Xsig_aug_;
+
+  int n_z_;
+  int n_z_R_;
+  int n_z_L_;
 
   /**
    * Constructor
@@ -78,17 +83,27 @@ public:
    */
   virtual ~UKF();
 
+
+
   /**
    * ProcessMeasurement
    * @param meas_package The latest measurement data of either radar or laser
    */
   void ProcessMeasurement(MeasurementPackage meas_package);
 
+
   /**
    * Initialize UKF with first measurement
    * @param meas_package The first measurement data of either radar or laser
    */
   void InitializeUKF(MeasurementPackage meas_package);
+
+  // Predication
+  void AugmentedSigmaPoints();
+
+  void SigmaPointPrediction(double delta_t);
+
+  void PredictMeanAndCovariance();
 
   /**
    * Prediction Predicts sigma points, the state, and the state covariance
@@ -97,17 +112,27 @@ public:
    */
   void Prediction(double delta_t);
 
+
+  void PredictLidarMeasurement(VectorXd* z_pred,  MatrixXd* S, MatrixXd* Zsig);
   /**
    * Updates the state and the state covariance matrix using a laser measurement
    * @param meas_package The measurement at k+1
    */
   void UpdateLidar(MeasurementPackage meas_package);
 
+
+  void PredictRadarMeasurement(VectorXd* z_pred,  MatrixXd* S, MatrixXd* Zsig);
   /**
    * Updates the state and the state covariance matrix using a radar measurement
    * @param meas_package The measurement at k+1
    */
   void UpdateRadar(MeasurementPackage meas_package);
+
+  // Update
+
+  void UpdateState(VectorXd* z, VectorXd* z_pred, MatrixXd* S,  MatrixXd* Zsig);
+
+
 };
 
 #endif /* UKF_H */
