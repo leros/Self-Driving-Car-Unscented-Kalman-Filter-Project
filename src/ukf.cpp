@@ -122,6 +122,7 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
   /*****************************************************************************
    *  Update
    ****************************************************************************/
+   /*
    if (meas_package.sensor_type_ == MeasurementPackage::RADAR) {
      // Radar updates
 	 UpdateRadar(meas_package);
@@ -129,6 +130,8 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
      // Laser updates
 	 UpdateLidar(meas_package);
    }
+   */
+   UpdateSensor(meas_package);
 }
 
 /**
@@ -144,7 +147,7 @@ void UKF::InitializeUKF(MeasurementPackage meas_package) {
   	  float phi_measured = meas_package.raw_measurements_[1];
   	  float px = rho_measured * cos(phi_measured);
   	  float py = rho_measured * sin(phi_measured);
-  	  x_ << px, py, 0, 0;
+  	  x_ << px, py, 0, 0, 0;
       time_us_ = meas_package.timestamp_;
 
     }
@@ -152,7 +155,7 @@ void UKF::InitializeUKF(MeasurementPackage meas_package) {
       /**
       Initialize state.
       */
-    	  x_ << meas_package.raw_measurements_[0], meas_package.raw_measurements_[1], 0, 0;
+    	  x_ << meas_package.raw_measurements_[0], meas_package.raw_measurements_[1], 0, 0, 0;
       time_us_ = meas_package.timestamp_;
     }
 
@@ -234,6 +237,29 @@ void UKF::UpdateRadar(MeasurementPackage meas_package) {
  * Helper Functions
  *
  * */
+
+void UKF::UpdateSensor(MeasurementPackage meas_package) {
+
+   bool is_radar =  meas_package.sensor_type_ == MeasurementPackage::RADAR;
+
+   if(is_radar) n_z_ = 3;
+   else n_z_ = 2;
+
+   //mean predicted measurement
+   VectorXd z_pred = VectorXd(n_z_);
+   //measurement covariance matrix S
+   MatrixXd S = MatrixXd::Zero(n_z_,n_z_);
+   //create matrix for sigma points in measurement space
+   MatrixXd Zsig = MatrixXd(n_z_, 2 * n_aug_ + 1);
+
+   if(is_radar) PredictRadarMeasurement(&z_pred, &S, &Zsig);
+   else PredictLidarMeasurement(&z_pred, &S, &Zsig);
+
+   VectorXd z = VectorXd(n_z_);
+   z = meas_package.raw_measurements_;
+   UpdateState(&z, &z_pred, &S, &Zsig);
+
+}
 
 void UKF::AugmentedSigmaPoints() {
   //create augmented mean vector

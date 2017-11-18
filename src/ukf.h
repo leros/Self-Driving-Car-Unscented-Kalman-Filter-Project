@@ -100,6 +100,8 @@ public:
 
 
 private:
+
+  void UpdateSensor(MeasurementPackage meas_package);
   /**
    * Initialize UKF with first measurement
    * @param meas_package The first measurement data of either radar or laser
