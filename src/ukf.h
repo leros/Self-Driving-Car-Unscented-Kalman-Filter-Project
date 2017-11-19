@@ -94,14 +94,13 @@ public:
    * matrix
    * @param delta_t Time between k and k+1 in s
    */
-  void Prediction(double delta_t);
-  void UpdateLidar(MeasurementPackage meas_package);
-  void UpdateRadar(MeasurementPackage meas_package);
 
+  void Prediction(double delta_t);
+  void UpdateSensor(MeasurementPackage meas_package);
 
 private:
 
-  void UpdateSensor(MeasurementPackage meas_package);
+
   /**
    * Initialize UKF with first measurement
    * @param meas_package The first measurement data of either radar or laser

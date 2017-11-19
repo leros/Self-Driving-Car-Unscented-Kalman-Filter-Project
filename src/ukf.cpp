@@ -183,64 +183,12 @@ void UKF::Prediction(double delta_t) {
    cout << "PredictMeanAndCovariance  done" << endl;
 }
 
+
 /**
- * Updates the state and the state covariance matrix using a laser measurement.
+ * Updates the state and the state covariance matrix using either a laser
+ * measurement or a radar measurement.
  * @param {MeasurementPackage} meas_package
  */
-void UKF::UpdateLidar(MeasurementPackage meas_package) {
-  /**
-  TODO:
-
-  Complete this function! Use lidar data to update the belief about the object's
-  position. Modify the state vector, x_, and covariance, P_.
-
-  You'll also need to calculate the lidar NIS.
-  */
-   n_z_ = 2;
-
-   //mean predicted measurement
-   VectorXd z_pred = VectorXd(n_z_);
-   //measurement covariance matrix S
-   MatrixXd S = MatrixXd::Zero(n_z_,n_z_);
-   //create matrix for sigma points in measurement space
-   MatrixXd Zsig = MatrixXd(n_z_, 2 * n_aug_ + 1);
-   PredictLidarMeasurement(&z_pred, &S, &Zsig);
-
-   VectorXd z = VectorXd(n_z_);
-   z = meas_package.raw_measurements_;
-   UpdateState(&z, &z_pred, &S, &Zsig);
-}
-
-void UKF::UpdateRadar(MeasurementPackage meas_package) {
-  /**
-  TODO:
-
-  Complete this function! Use radar data to update the belief about the object's
-  position. Modify the state vector, x_, and covariance, P_.
-
-  You'll also need to calculate the radar NIS.
-  */
-   n_z_ = 3;
-
-   //mean predicted measurement
-   VectorXd z_pred = VectorXd(n_z_);
-   //measurement covariance matrix S
-   MatrixXd S = MatrixXd::Zero(n_z_,n_z_);
-   //create matrix for sigma points in measurement space
-   MatrixXd Zsig = MatrixXd(n_z_, 2 * n_aug_ + 1);
-
-   PredictRadarMeasurement(&z_pred, &S, &Zsig);
-
-   VectorXd z = VectorXd(n_z_);
-   z = meas_package.raw_measurements_;
-   UpdateState(&z, &z_pred, &S, &Zsig);
-}
-
-
-/*
- * Helper Functions
- *
- * */
 
 void UKF::UpdateSensor(MeasurementPackage meas_package) {
 
