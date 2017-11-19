@@ -70,8 +70,11 @@ public:
   ///* Sigma point spreading parameter
   double lambda_;
 
+  ///* Sigma point matrix
   MatrixXd Xsig_aug_;
 
+  ///*Measurement dimension, radar can measure r, phi, and r_dot,
+  // laser can measure px, py
   int n_z_;
 
   /**

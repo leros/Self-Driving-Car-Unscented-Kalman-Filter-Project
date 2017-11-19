@@ -14,10 +14,10 @@ UKF::UKF() {
   is_initialized_ = false;
 
   // if this is false, laser measurements will be ignored (except during init)
-  // use_laser_ = true;
+  use_laser_ = true;
 
   // if this is false, radar measurements will be ignored (except during init)
-  // use_radar_ = true;
+  use_radar_ = true;
 
   // initial state vector
   x_ = VectorXd(5);
@@ -26,10 +26,10 @@ UKF::UKF() {
   P_ = MatrixXd(5, 5);
 
   // Process noise standard deviation longitudinal acceleration in m/s^2
-  std_a_ = 1;
+  std_a_ = 0.5;
 
   // Process noise standard deviation yaw acceleration in rad/s^2
-  std_yawdd_ = 1;
+  std_yawdd_ = 0.5;
 
   // Laser measurement noise standard deviation position1 in m
   std_laspx_ = 0.15;
@@ -72,13 +72,17 @@ UKF::UKF() {
 	 weights_(i) = weight;
    }
 
-  P_ << 0.1, 0, 0, 0, 0,
-		0, 0.1, 0, 0, 0,
-    	    0, 0, 0.1, 0, 0,
-    	    0, 0, 0, 0.1, 0,
-    	    0, 0, 0, 0, 0.1;
+  // State covariance matrix
+  P_ << 0.5, 0, 0, 0, 0,
+		0, 0.5, 0, 0, 0,
+    	    0, 0, 0.5, 0, 0,
+    	    0, 0, 0, 0.5, 0,
+    	    0, 0, 0, 0, 0.5;
 
+  // Sigma point matrix
   Xsig_aug_ = MatrixXd(n_aug_, 2 * n_aug_ + 1);
+
+  // Predicted sigma points matrix
   Xsig_pred_ = MatrixXd(n_x_, 2*n_aug_+1);
 
 
@@ -105,6 +109,12 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
 	   InitializeUKF(meas_package);
 	   return;
    }
+
+   // Check the data source
+   is_radar_ =  meas_package.sensor_type_ == MeasurementPackage::RADAR;
+
+   // return if 1) radar data and ignore radar 2)laser data and ignore laser
+   if((is_radar_ and !use_radar_) or (!is_radar_ and !use_laser_)) return;
 
   /*****************************************************************************
    *  Prediction
@@ -173,10 +183,7 @@ void UKF::Prediction(double delta_t) {
  * measurement or a radar measurement.
  * @param {MeasurementPackage} meas_package
  */
-
 void UKF::UpdateSensor(MeasurementPackage meas_package) {
-
-   is_radar_ =  meas_package.sensor_type_ == MeasurementPackage::RADAR;
 
    if(is_radar_) n_z_ = 3;
    else n_z_ = 2;
@@ -196,6 +203,11 @@ void UKF::UpdateSensor(MeasurementPackage meas_package) {
 
 }
 
+/**
+ * Augments the state and the state covariance matrix to create
+ * augmented points
+ * @param none
+ */
 void UKF::AugmentedSigmaPoints() {
   //create augmented mean vector
   VectorXd x_aug = VectorXd(7);
@@ -221,6 +233,10 @@ void UKF::AugmentedSigmaPoints() {
 
 }
 
+/**
+ * Predicts single points
+ * @param delta time
+ */
 void UKF::SigmaPointPrediction(double delta_t) {
 
     for(int i = 0; i < 2 * n_aug_ + 1; i++) {
@@ -251,6 +267,10 @@ void UKF::SigmaPointPrediction(double delta_t) {
 
 }
 
+/**
+ * Predicts the state and the state covariance matrix
+ * @param none
+ */
 void UKF::PredictMeanAndCovariance() {
 	  x_.fill(0.0);
 	  for(int i = 0; i < n_x_; i++) {
@@ -266,6 +286,11 @@ void UKF::PredictMeanAndCovariance() {
 	  }
 }
 
+/**
+ * Transforms sigma points into lidar measurements space and calculates mean and
+ * covariance matrix
+ * @param predicated mean, predicted Covariance, sigma points
+ */
 void UKF::PredictLidarMeasurement(VectorXd* z_pred,  MatrixXd* S, MatrixXd* Zsig) {
 
 	 //transform sigma points into measurement space
@@ -296,8 +321,9 @@ void UKF::PredictLidarMeasurement(VectorXd* z_pred,  MatrixXd* S, MatrixXd* Zsig
 
 
 /**
- * Updates the state and the state covariance matrix using a radar measurement.
- * @param {MeasurementPackage} meas_package
+ * Transforms sigma points into radar measurements space and calculates mean and
+ * covariance matrix
+ * @param predicated mean, predicted Covariance, sigma points
  */
 void UKF::PredictRadarMeasurement(VectorXd* z_pred,  MatrixXd* S, MatrixXd* Zsig) {
 
@@ -341,7 +367,10 @@ void UKF::PredictRadarMeasurement(VectorXd* z_pred,  MatrixXd* S, MatrixXd* Zsig
 
 }
 
-
+/**
+ * Update state mean and covariance matrix
+ * @param measurements, predicated mean, predicted Covariance, sigma points
+ */
 void UKF::UpdateState(VectorXd* z, VectorXd* z_pred, MatrixXd* S,  MatrixXd* Zsig) {
 
 	 //create matrix for cross correlation Tc
@@ -366,6 +395,10 @@ void UKF::UpdateState(VectorXd* z, VectorXd* z_pred, MatrixXd* S,  MatrixXd* Zsi
 	  P_ = P_ - K * *S * K.transpose();
 }
 
+/**
+ * Normalizes angles
+ * @param angles, yaw position in state vector
+ */
 void UKF::NormalizeAngle(VectorXd* diff, int yaw_pos) {
     while ((*diff)(yaw_pos)> M_PI) (*diff)(yaw_pos)-=2.*M_PI;
     while ((*diff)(yaw_pos)<-M_PI) (*diff)(yaw_pos)+=2.*M_PI;
