@@ -70,8 +70,6 @@ public:
   MatrixXd Xsig_aug_;
 
   int n_z_;
-  int n_z_R_;
-  int n_z_L_;
 
   /**
    * Constructor
@@ -94,8 +92,8 @@ public:
    * matrix
    * @param delta_t Time between k and k+1 in s
    */
-
   void Prediction(double delta_t);
+
   void UpdateSensor(MeasurementPackage meas_package);
 
 private:
@@ -116,7 +114,6 @@ private:
 
 
   // Update
-
   /**
    * Updates the state and the state covariance matrix using a laser measurement
    * @param meas_package The measurement at k+1
