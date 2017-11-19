@@ -132,6 +132,7 @@ private:
 
   void UpdateState(VectorXd* z, VectorXd* z_pred, MatrixXd* S,  MatrixXd* Zsig);
 
+  void NormalizeAngle(VectorXd* diff, int r);
 
 };
 

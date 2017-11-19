@@ -133,6 +133,9 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
    }
    */
    UpdateSensor(meas_package);
+
+   // false by default, will be updated in UpdateSensor() function
+   use_radar_ = false;
 }
 
 /**
@@ -192,9 +195,9 @@ void UKF::Prediction(double delta_t) {
 
 void UKF::UpdateSensor(MeasurementPackage meas_package) {
 
-   bool is_radar =  meas_package.sensor_type_ == MeasurementPackage::RADAR;
+   use_radar_ =  meas_package.sensor_type_ == MeasurementPackage::RADAR;
 
-   if(is_radar) n_z_ = 3;
+   if(use_radar_) n_z_ = 3;
    else n_z_ = 2;
 
    //mean predicted measurement
@@ -204,7 +207,7 @@ void UKF::UpdateSensor(MeasurementPackage meas_package) {
    //create matrix for sigma points in measurement space
    MatrixXd Zsig = MatrixXd(n_z_, 2 * n_aug_ + 1);
 
-   if(is_radar) {
+   if(use_radar_) {
 	   PredictRadarMeasurement(&z_pred, &S, &Zsig);
 	   cout << "PredictRadarMeasurement  done" << endl;
    }
@@ -285,9 +288,12 @@ void UKF::PredictMeanAndCovariance() {
 	  for(int i = 0; i < n_x_; i++) {
 		  x_(i) = Xsig_pred_.row(i).dot(weights_);
 	  }
+
 	  P_.fill(0.0);
+	  int yaw_pos = 3;
 	  for(int i = 0; i < 2*n_aug_+1; i++) {
 	     VectorXd diff = Xsig_pred_.col(i) - x_;
+	     NormalizeAngle(&diff, yaw_pos);
 	     P_ = P_ + weights_(i) * (diff * diff.transpose());
 	  }
 }
@@ -353,8 +359,10 @@ void UKF::PredictRadarMeasurement(VectorXd* z_pred,  MatrixXd* S, MatrixXd* Zsig
 	 }
 
 	 //calculate measurement covariance matrix S
+     int yaw_pos = 1;
 	 for(int i = 0; i < 2 * n_aug_ + 1; i++) {
 		VectorXd diff = Zsig->col(i) - *z_pred;
+	    NormalizeAngle(&diff, yaw_pos);
 		*S = *S + weights_(i) * (diff * diff.transpose());
 	 }
 	 MatrixXd R = MatrixXd(n_z_,n_z_);
@@ -373,8 +381,17 @@ void UKF::UpdateState(VectorXd* z, VectorXd* z_pred, MatrixXd* S,  MatrixXd* Zsi
 	  MatrixXd Tc = MatrixXd::Zero(n_x_, n_z_);
 	  cout << "#"<< z->rows() << z->cols() << z_pred->rows() << z_pred->cols() << S->rows() << S->cols() << Zsig->rows() << Zsig->cols() << "#"<< endl; //313133315
 	  //calculate cross correlation matrix
+
+
 	  for(int i = 0; i < 2 * n_aug_ + 1; i++) {
-	      Tc = Tc + weights_(i) * (Xsig_pred_.col(i) - x_) * ((Zsig->col(i) - *z_pred).transpose());
+		  //residual
+		  VectorXd z_diff = Zsig->col(i) - *z_pred;
+		  if(use_radar_) NormalizeAngle(&z_diff, 1);
+		  // state difference
+		  VectorXd x_diff = Xsig_pred_.col(i) - x_;
+		  NormalizeAngle(&x_diff, 3);
+
+	      Tc = Tc + weights_(i) * x_diff * z_diff.transpose();
 	  }
 	  cout << "get Tc" << endl;
 
@@ -387,4 +404,9 @@ void UKF::UpdateState(VectorXd* z, VectorXd* z_pred, MatrixXd* S,  MatrixXd* Zsi
 	  cout << "get x_" << endl;
 	  P_ = P_ - K * *S * K.transpose();
 	  cout << "get P_" << endl;
+}
+
+void UKF::NormalizeAngle(VectorXd* diff, int yaw_pos) {
+    while ((*diff)(yaw_pos)> M_PI) (*diff)(yaw_pos)-=2.*M_PI;
+    while ((*diff)(yaw_pos)<-M_PI) (*diff)(yaw_pos)+=2.*M_PI;
 }
