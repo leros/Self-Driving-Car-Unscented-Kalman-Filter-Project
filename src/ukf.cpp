@@ -119,7 +119,7 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
    UpdateSensor(meas_package);
 
    // false by default, will be updated in UpdateSensor() function
-   use_radar_ = false;
+   is_radar_ = false;
 }
 
 /**
@@ -176,9 +176,9 @@ void UKF::Prediction(double delta_t) {
 
 void UKF::UpdateSensor(MeasurementPackage meas_package) {
 
-   use_radar_ =  meas_package.sensor_type_ == MeasurementPackage::RADAR;
+   is_radar_ =  meas_package.sensor_type_ == MeasurementPackage::RADAR;
 
-   if(use_radar_) n_z_ = 3;
+   if(is_radar_) n_z_ = 3;
    else n_z_ = 2;
 
    //mean predicted measurement
@@ -188,7 +188,7 @@ void UKF::UpdateSensor(MeasurementPackage meas_package) {
    //create matrix for sigma points in measurement space
    MatrixXd Zsig = MatrixXd(n_z_, 2 * n_aug_ + 1);
 
-   if(use_radar_) PredictRadarMeasurement(&z_pred, &S, &Zsig);
+   if(is_radar_) PredictRadarMeasurement(&z_pred, &S, &Zsig);
    else PredictLidarMeasurement(&z_pred, &S, &Zsig);
 
    VectorXd z  = meas_package.raw_measurements_;
@@ -350,7 +350,7 @@ void UKF::UpdateState(VectorXd* z, VectorXd* z_pred, MatrixXd* S,  MatrixXd* Zsi
 	  for(int i = 0; i < 2 * n_aug_ + 1; i++) {
 		  //residual
 		  VectorXd z_diff = Zsig->col(i) - *z_pred;
-		  if(use_radar_) NormalizeAngle(&z_diff, 1);
+		  if(is_radar_) NormalizeAngle(&z_diff, 1);
 
 		  // state difference
 		  VectorXd x_diff = Xsig_pred_.col(i) - x_;
