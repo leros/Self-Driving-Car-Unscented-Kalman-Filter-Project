@@ -260,22 +260,22 @@ void UKF::SigmaPointPrediction(double delta_t) {
       double v_a = Xsig_aug_(5, i); // longitudinal acceleration noise
       double v_dd = Xsig_aug_(6, i); // yaw acceleration noise
 
-      VectorXd tmp(n_x_);
-      if(psi_dot == 0) {
-    	    tmp << px + v*cos(psi)*delta_t + 0.5*delta_t*delta_t*cos(psi)*v_a,
+
+      if(fabs(psi_dot) <= 0.001) {
+    	  // divides by zero
+    	    Xsig_pred_.col(i) << px + v*cos(psi)*delta_t + 0.5*delta_t*delta_t*cos(psi)*v_a,
               py + v*sin(psi)*delta_t + 0.5*delta_t*delta_t*sin(psi)*v_a,
               v + delta_t*v_a,
               psi + 0.5*delta_t*delta_t*v_dd,
               psi_dot + delta_t*v_dd;
       }
       else{
-    	    tmp << px + v/psi_dot*(sin(psi+psi_dot*delta_t) - sin(psi)) + 0.5*delta_t*delta_t*cos(psi)*v_a,
+    	    Xsig_pred_.col(i) << px + v/psi_dot*(sin(psi+psi_dot*delta_t) - sin(psi)) + 0.5*delta_t*delta_t*cos(psi)*v_a,
               py + v/psi_dot*(cos(psi) - cos(psi+psi_dot*delta_t)) + 0.5*delta_t*delta_t*sin(psi)*v_a,
               v + delta_t*v_a,
               psi + psi_dot*delta_t + 0.5*delta_t*delta_t*v_dd,
               psi_dot + delta_t*v_dd;
       }
-      Xsig_pred_.col(i) = tmp;
     }
 
 }
