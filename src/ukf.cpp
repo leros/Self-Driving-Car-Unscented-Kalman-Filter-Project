@@ -26,10 +26,10 @@ UKF::UKF() {
   P_ = MatrixXd(5, 5);
 
   // Process noise standard deviation longitudinal acceleration in m/s^2
-  std_a_ = 5; // TODO: set to a small value see Tuning Process Noise
+  std_a_ = 1; // TODO: set to a small value see Tuning Process Noise
 
   // Process noise standard deviation yaw acceleration in rad/s^2
-  std_yawdd_ = 5; // TODO: set to a small value see Tuning Process Noise
+  std_yawdd_ = 1; // TODO: set to a small value see Tuning Process Noise
 
   // Laser measurement noise standard deviation position1 in m
   std_laspx_ = 0.15;
@@ -77,7 +77,6 @@ UKF::UKF() {
 	 weights_(i) = weight;
    }
 
-  //TODO: Tune P_
   P_ << 0.1, 0, 0, 0, 0,
 		0, 0.1, 0, 0, 0,
     	    0, 0, 0.1, 0, 0,
